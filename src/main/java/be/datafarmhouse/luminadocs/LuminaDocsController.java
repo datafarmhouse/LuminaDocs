@@ -18,7 +18,7 @@ public class LuminaDocsController {
     @SneakyThrows
     @PostMapping("/")
     public void generatePDF(
-            @RequestBody final DocumentRequest documentRequest,
+            @RequestBody final LuminaDocsRequest documentRequest,
             final HttpServletResponse response
     ) {
         response.setContentType("application/pdf");

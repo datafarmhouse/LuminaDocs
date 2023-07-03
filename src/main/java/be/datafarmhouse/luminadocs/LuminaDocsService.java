@@ -13,15 +13,19 @@ public class LuminaDocsService {
     private final TemplateService templateService;
     private final PDFService pdfService;
 
-    public void generateDocument(final DocumentRequest documentRequest, final ServletOutputStream outputStream) {
+    public void generateDocument(final LuminaDocsRequest documentRequest, final ServletOutputStream outputStream) {
+        final LuminaDocsRequest.Engine engine = documentRequest.getEngine();
+        final LuminaDocsRequest.Template template = documentRequest.getTemplate();
+
         final String html = templateService.generateHTML(
-                documentRequest.getEngine().getTemplate(),
-                documentRequest.getTemplate().getContent(),
-                documentRequest.getTemplate().getVariables()
+                engine.getTemplate(),
+                template.getBody(),
+                template.getVariables(),
+                template.getCss().getLib()
         );
 
         pdfService.generatePDF(
-                documentRequest.getEngine().getPdf(),
+                engine.getPdf(),
                 html,
                 outputStream
         );

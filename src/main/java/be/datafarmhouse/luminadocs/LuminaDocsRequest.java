@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Data
-public class DocumentRequest {
+public class LuminaDocsRequest {
 
     private Engine engine = new Engine();
     private Template template = new Template();
@@ -22,7 +22,8 @@ public class DocumentRequest {
     @Data
     public static class Template {
 
-        private String content = "<body><h1>You need to supply template.content and optionally template.variables.</h1></body>";
+        private CSS css = new CSS();
+        private String body = "<h1>You need to supply template.content and optionally template.variables.</h1>";
         private Map<String, Object> variables = new HashMap<>();
     }
 
@@ -30,5 +31,11 @@ public class DocumentRequest {
     public static final class Options {
 
         private String filename = "document.pdf";
+    }
+
+    @Data
+    public static final class CSS {
+
+        private String lib = "tailwind";
     }
 }

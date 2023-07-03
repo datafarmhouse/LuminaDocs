@@ -33,7 +33,10 @@ Sample request:
         "pdf":"pdfbox"
     },
     "template":{
-        "content":"<body>hello there: ${test} <br/> ${nested.x} <br/> ${nested.y} <br/> ${nested.y?string.currency}</body>",
+        "css":{
+            "lib":"tailwind"
+        },
+        "body":"<div class='text-orange-500 text-xl rounded-lg border p-2'>hello there: ${test} <br/> <span class='font-bold'>${nested.x}</span> <br/> ${nested.y} <br/> ${nested.y?string.currency}</div>",
         "variables":{
             "test":"general kenobi",
             "nested": {
@@ -44,6 +47,16 @@ Sample request:
     },
     "options":{
         "filename":"test.pdf"
+    }
+}
+```
+
+Minimal request:
+
+```
+{
+    "template":{
+        "body":"Hello World!"
     }
 }
 ```

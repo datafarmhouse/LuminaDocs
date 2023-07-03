@@ -26,7 +26,7 @@ public class PDFEnginePDFBox implements PDFEngine {
     }
 
     @Override
-    public void generate(String html, OutputStream outputStream) throws IOException {
+    public void generate(final String html, final OutputStream outputStream) throws IOException {
         new PdfRendererBuilder()
                 .useFastMode()
                 .withHtmlContent(html, "classpath:/")
