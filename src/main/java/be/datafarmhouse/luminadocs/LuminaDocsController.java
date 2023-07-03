@@ -22,7 +22,7 @@ public class LuminaDocsController {
             final HttpServletResponse response
     ) {
         response.setContentType("application/pdf");
-        response.setHeader("Content-Disposition", "attachment; filename=" + documentRequest.getOptions().getFilename());
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + documentRequest.getOptions().getFilename() + "\"");
 
         luminaDocsService.generateDocument(documentRequest, response.getOutputStream());
     }
