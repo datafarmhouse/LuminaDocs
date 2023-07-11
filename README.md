@@ -14,16 +14,6 @@ Key Features:
    variable values should be inserted, enabling dynamic content generation.
 2. REST API: Supply a JSON containing the variable values that should be used in the template. This allows for flexible
    customization and data-driven document generation.
-3. Seamless Integration: Easily integrate the Headless Document Generator into your existing workflow or application
-   using the provided API endpoints. Enjoy the convenience of generating PDFs programmatically without any manual
-   intervention.
-4. Extensive Customization: Tailor your document's appearance by designing templates with headers, footers, styling, and
-   more. Create visually appealing PDFs that match your brand's identity and meet your specific requirements.
-5. Efficient and Scalable: Built for performance, the Headless Document Generator optimizes resource utilization and can
-   handle high volumes of document generation requests without compromising speed or reliability.
-6. Documentation and Support: Benefit from comprehensive documentation that guides you through the setup and usage of
-   the generator. Additionally, take advantage of a supportive community and dedicated support channels for assistance
-   and troubleshooting.
 
 Whether you need to generate invoices, contracts, reports, or any other type of dynamic document, the Headless Document
 Generator simplifies the process, empowering you to focus on the content while automating the PDF generation. Experience
@@ -66,6 +56,16 @@ Minimal request:
 }
 ```
 
-There are no other options for the engines just yet, but it has been setup so that others can be added easily.
+Template engine options:
+
+- freemarker (default)
+- handlebars
+- mustache
+- pebble
+
+PDF engine options:
+
+- pdfbox
+- wkhtml (-e WKHTML_URL=http://wkhtml requires https://hub.docker.com/r/openlabs/docker-wkhtmltopdf-aas)
 
 I am open to requests.

@@ -13,7 +13,7 @@
 
     <groupId>be.datafarmhouse</groupId>
     <artifactId>lumina-docs</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -48,6 +48,24 @@
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
             <version>2.3.32</version>
+        </dependency>
+        <!-- 2. Handlebars -->
+        <dependency>
+            <groupId>com.github.jknack</groupId>
+            <artifactId>handlebars</artifactId>
+            <version>4.3.1</version>
+        </dependency>
+        <!-- 3. Mustache -->
+        <dependency>
+            <groupId>com.github.spullara.mustache.java</groupId>
+            <artifactId>compiler</artifactId>
+            <version>0.9.10</version>
+        </dependency>
+        <!-- 4. Pebble -->
+        <dependency>
+            <groupId>io.pebbletemplates</groupId>
+            <artifactId>pebble</artifactId>
+            <version>3.2.1</version>
         </dependency>
         <!-- PDF engines -->
         <!-- 1. PDFBox -->
