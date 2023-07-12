@@ -5,6 +5,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,7 +24,7 @@ public class PDFEngineWKHTML implements PDFEngine {
 
     private final RestTemplate wkhtmlClient;
 
-    @Value("${wkhtml.url:wkhtml}")
+    @Value("${wkhtml.url:http://wkhtml}")
     private String url;
 
     @Override
@@ -31,9 +35,11 @@ public class PDFEngineWKHTML implements PDFEngine {
     @Override
     public void generate(final String html, final OutputStream outputStream) throws IOException {
         final String encodedHTML = Base64.getEncoder().encodeToString(html.getBytes());
-        final WKHTMLRequest request = new WKHTMLRequest(encodedHTML);
-        final String pdf = wkhtmlClient.postForObject(url, request, String.class);
-        outputStream.write(Objects.requireNonNull(pdf).getBytes());
+        final HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        final HttpEntity<WKHTMLRequest> entity = new HttpEntity<>(new WKHTMLRequest(encodedHTML), headers);
+        final ResponseEntity<String> response = wkhtmlClient.postForEntity(url, entity, String.class);
+        outputStream.write(Objects.requireNonNull(response.getBody()).getBytes());
     }
 
     @Data
