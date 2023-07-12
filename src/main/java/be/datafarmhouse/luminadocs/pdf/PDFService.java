@@ -20,7 +20,7 @@ public class PDFService {
     private final List<PDFEngine> engines;
 
     @SneakyThrows
-    public void generatePDF(final String selectedEngine, final String html, final OutputStream outputStream) {
+    public void generatePDF(final boolean debug, final String selectedEngine, final String html, final OutputStream outputStream) {
         for (final PDFEngine engine : engines) {
             if (StringUtils.equalsIgnoreCase(engine.getName(), selectedEngine)) {
                 final StopWatch stopWatch = StopWatch.createStarted();

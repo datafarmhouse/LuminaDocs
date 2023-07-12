@@ -20,7 +20,7 @@ public class TemplateService {
     private final List<TemplateEngine> engines;
 
     @SneakyThrows
-    public String generateHTML(final String selectedEngine, final String template, final Map<String, Object> variables, final String cssLib) {
+    public String generateHTML(final boolean debug, final String selectedEngine, final String template, final Map<String, Object> variables, final String cssLib) {
         for (final TemplateEngine engine : engines) {
             if (StringUtils.equalsIgnoreCase(engine.getName(), selectedEngine)) {
                 final StopWatch stopWatch = StopWatch.createStarted();
@@ -28,6 +28,10 @@ public class TemplateService {
                         "<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"" + cssLib + ".css\"/></head><body>" +
                                 engine.process(template, variables) +
                                 "</body></html>";
+                if (debug) {
+                    log.info("Generated:");
+                    log.info(html);
+                }
                 log.info("HTML generation took {}ms.", stopWatch.getTime(TimeUnit.MILLISECONDS));
                 return html;
             }

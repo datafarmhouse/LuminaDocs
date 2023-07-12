@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +18,7 @@ import java.io.OutputStream;
 import java.util.Base64;
 import java.util.Objects;
 
+@Log4j2
 @Component
 @RequiredArgsConstructor
 // this implementation uses https://hub.docker.com/r/openlabs/docker-wkhtmltopdf-aas
@@ -38,8 +40,8 @@ public class PDFEngineWKHTML implements PDFEngine {
         final HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         final HttpEntity<WKHTMLRequest> entity = new HttpEntity<>(new WKHTMLRequest(encodedHTML), headers);
-        final ResponseEntity<String> response = wkhtmlClient.postForEntity(url, entity, String.class);
-        outputStream.write(Objects.requireNonNull(response.getBody()).getBytes());
+        final ResponseEntity<byte[]> response = wkhtmlClient.postForEntity(url, entity, byte[].class);
+        outputStream.write(Objects.requireNonNull(response.getBody()));
     }
 
     @Data

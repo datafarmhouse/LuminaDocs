@@ -13,7 +13,7 @@
 
     <groupId>be.datafarmhouse</groupId>
     <artifactId>lumina-docs</artifactId>
-    <version>1.1</version>
+    <version>1.1.1</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -87,7 +87,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <imageName>vanleemputteng/luminadocs:1.1</imageName>
+                    <imageName>vanleemputteng/luminadocs:1.1.1</imageName>
                 </configuration>
             </plugin>
         </plugins>

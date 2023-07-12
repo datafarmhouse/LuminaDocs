@@ -18,6 +18,7 @@ public class LuminaDocsService {
         final LuminaDocsRequest.Template template = documentRequest.getTemplate();
 
         final String html = templateService.generateHTML(
+                documentRequest.isDebug(),
                 engine.getTemplate(),
                 template.getBody(),
                 template.getVariables(),
@@ -25,6 +26,7 @@ public class LuminaDocsService {
         );
 
         pdfService.generatePDF(
+                documentRequest.isDebug(),
                 engine.getPdf(),
                 html,
                 outputStream

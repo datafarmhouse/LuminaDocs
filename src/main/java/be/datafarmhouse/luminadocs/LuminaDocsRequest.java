@@ -8,13 +8,13 @@ import java.util.Map;
 @Data
 public class LuminaDocsRequest {
 
+    private boolean debug = false;
     private Engine engine = new Engine();
     private Template template = new Template();
     private Options options = new Options();
 
     @Data
     public static class Engine {
-
         private String template = "freemarker";
         private String pdf = "pdfbox";
     }
