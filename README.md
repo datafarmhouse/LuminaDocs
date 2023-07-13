@@ -1,4 +1,4 @@
-# LuminaDocs 1.5
+# LuminaDocs 1.5.2
 
 https://hub.docker.com/r/vanleemputteng/luminadocs/tags
 

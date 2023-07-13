@@ -6,6 +6,10 @@ import be.datafarmhouse.luminadocs.template.data.CSSRepository;
 import be.datafarmhouse.luminadocs.template.data.TemplateData;
 import be.datafarmhouse.luminadocs.template.data.TemplateRepository;
 import be.datafarmhouse.luminadocs.template.engine.TemplateEngine;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -24,6 +28,24 @@ public class TemplateService {
     private final CSSRepository cssRepository;
     private final TemplateRepository templateRepository;
     private final List<TemplateEngine> engines;
+    private final ObjectMapper mapper = new ObjectMapper();
+
+    @PostConstruct
+    public void init() {
+        mapper.enable(SerializationFeature.INDENT_OUTPUT);
+    }
+
+    public TemplateData save(final TemplateData template) {
+        if (StringUtils.isNotBlank(template.getTestVars())) {
+            try {
+                final JsonNode jsonNode = mapper.readValue(template.getTestVars(), JsonNode.class);
+                template.setTestVars(mapper.writeValueAsString(jsonNode));
+            } catch (final Throwable t) {
+                //
+            }
+        }
+        return templateRepository.save(template);
+    }
 
     @SneakyThrows
     public TemplateResult generateHTML(final LuminaDocsRequest.Template requestTemplate) {
@@ -34,7 +56,7 @@ public class TemplateService {
         final String css;
         final String template;
         if (StringUtils.isNotBlank(requestTemplate.getCode())) {
-            final TemplateData storedTemplate = templateRepository.getReferenceById(requestTemplate.getCode());
+            final TemplateData storedTemplate = templateRepository.findByCode(requestTemplate.getCode());
             css = getCSS(requestTemplate.getCss(), storedTemplate.getCss());
             template = storedTemplate.getContent();
             pdfEngine = storedTemplate.getPdfEngine().name();
@@ -65,7 +87,7 @@ public class TemplateService {
     protected String getCSS(final LuminaDocsRequest.CSS requestCSS, CSSData templateCSS) {
         final StringBuilder sb = new StringBuilder("<style>");
         if (StringUtils.isNotBlank(requestCSS.getCode())) {
-            final CSSData cssData = cssRepository.getReferenceById(requestCSS.getCode());
+            final CSSData cssData = cssRepository.findByCode(requestCSS.getCode());
             sb.append(cssData.getContent());
         } else if (StringUtils.isNotBlank(requestCSS.getContent())) {
             sb.append(requestCSS.getContent());

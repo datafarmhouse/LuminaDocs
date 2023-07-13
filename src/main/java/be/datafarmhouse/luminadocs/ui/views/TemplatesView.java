@@ -1,6 +1,7 @@
 package be.datafarmhouse.luminadocs.ui.views;
 
 import be.datafarmhouse.luminadocs.LuminaDocsRequest;
+import be.datafarmhouse.luminadocs.LuminaDocsService;
 import be.datafarmhouse.luminadocs.template.TemplateService;
 import be.datafarmhouse.luminadocs.template.data.*;
 import be.datafarmhouse.luminadocs.ui.Layout;
@@ -10,11 +11,11 @@ import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.AnchorTargetValue;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
@@ -26,10 +27,15 @@ import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.provider.DataProvider;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.StreamResource;
+import com.vaadin.flow.server.StreamResourceWriter;
+import com.vaadin.flow.server.VaadinSession;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -41,6 +47,7 @@ public class TemplatesView extends Div {
     private final TemplateRepository templateRepository;
     private final CSSRepository cssRepository;
     private final TemplateService templateService;
+    private final LuminaDocsService luminaDocsService;
 
     private ObjectMapper mapper = new ObjectMapper();
     private TemplateData selection;
@@ -59,13 +66,14 @@ public class TemplatesView extends Div {
 
     private Button createButton;
     private Button saveButton;
-    private Button cancelButton;
+    private DataProvider<TemplateData, ?> gridData;
 
     @Autowired
-    public TemplatesView(final TemplateRepository templateRepository, final CSSRepository cssRepository, final TemplateService templateService) {
+    public TemplatesView(final TemplateRepository templateRepository, final CSSRepository cssRepository, final TemplateService templateService, final LuminaDocsService luminaDocsService) {
         this.templateRepository = templateRepository;
         this.cssRepository = cssRepository;
         this.templateService = templateService;
+        this.luminaDocsService = luminaDocsService;
         initView();
         loadData();
     }
@@ -79,7 +87,7 @@ public class TemplatesView extends Div {
         grid.setColumns("code");
         grid.asSingleSelect().addValueChangeListener(event -> setSelection(event.getValue()));
 
-        createButton = new Button("Create", VaadinIcon.PLUS_SQUARE_O.create());
+        createButton = new Button("ADD", VaadinIcon.FILE_ADD.create());
         createButton.addClickListener(event -> setSelection(new TemplateData()));
 
         VerticalLayout leftLayout = new VerticalLayout();
@@ -100,14 +108,15 @@ public class TemplatesView extends Div {
     }
 
     private void loadData() {
-        grid.setDataProvider(DataProvider.fromCallbacks(
+        gridData = DataProvider.fromCallbacks(
                 // First callback fetches items based on the requested range
                 query -> templateRepository.findAll(
                         PageRequest.of(query.getOffset() / query.getLimit(), query.getLimit())
                 ).stream(),
                 // Second callback fetches the total count of items
                 query -> Math.toIntExact(templateRepository.count())
-        ));
+        );
+        grid.setDataProvider(gridData);
     }
 
     private void setSelection(final TemplateData template) {
@@ -127,15 +136,39 @@ public class TemplatesView extends Div {
     private Component createButtonPanel() {
         templateName = new Html("<h2></h2>");
 
-        saveButton = new Button("Save", VaadinIcon.FILE.create());
-        saveButton.addClickListener(event -> templateRepository.save(selection));
-        cancelButton = new Button("Cancel", VaadinIcon.BAN.create());
-        cancelButton.addClickListener(event -> setSelection(null));
+        saveButton = new Button("SAVE", VaadinIcon.FILE.create());
+        saveButton.addClickListener(event -> {
+            if (selection.getId() == null) {
+                templateRepository.save(selection);
+                setSelection(null);
+                gridData.refreshAll();
+            } else {
+                setSelection(templateService.save(selection));
+            }
+        });
 
-        final FlexLayout buttons = new FlexLayout(saveButton, cancelButton);
-        buttons.setWidthFull();
-        buttons.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
-        return new VerticalLayout(templateName, buttons);
+        final StreamResource resource = new StreamResource("preview.pdf", new StreamResourceWriter() {
+            @Override
+            public void accept(final OutputStream outputStream, final VaadinSession vaadinSession) throws IOException {
+                final LuminaDocsRequest request = new LuminaDocsRequest();
+                request.getTemplate().setCode(selection.getCode());
+                request.getTemplate().setVariables(mapper.readValue(selection.getTestVars(), Map.class));
+                luminaDocsService.generateDocument(request, outputStream);
+            }
+        });
+        final Anchor downloadButton = new Anchor(resource, "download");
+        downloadButton.setTarget(AnchorTargetValue.forString("_new"));
+        downloadButton.removeAll();
+        downloadButton.add(new Button("DOWNLOAD PDF", VaadinIcon.DOWNLOAD.create()));
+
+        final Button deleteButton = new Button("DELETE", VaadinIcon.FILE_REMOVE.create());
+        deleteButton.addClickListener(event -> {
+            templateRepository.delete(selection);
+            setSelection(null);
+            gridData.refreshAll();
+        });
+
+        return new VerticalLayout(templateName, new HorizontalLayout(saveButton, downloadButton, deleteButton));
     }
 
     private VerticalLayout createForm() {
@@ -158,7 +191,9 @@ public class TemplatesView extends Div {
         testVarField = new TextArea("Test Variables");
         testVarField.setWidthFull();
         testVarField.setHeight("500px");
-        testVarField.addValueChangeListener(event -> render());
+        testVarField.addValueChangeListener(event -> {
+            render();
+        });
         binder.forField(testVarField).bind(TemplateData::getTestVars, TemplateData::setTestVars);
 
         pdfEngineComboBox = new ComboBox<>("PDF Engine", Arrays.asList(PDFEngineData.values()));
