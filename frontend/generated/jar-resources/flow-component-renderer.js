@@ -1,9 +1,9 @@
-import '@polymer/polymer/lib/elements/dom-if.js'
-import { html } from '@polymer/polymer/lib/utils/html-tag.js'
-import { Debouncer } from '@polymer/polymer/lib/utils/debounce.js'
-import { idlePeriod } from '@polymer/polymer/lib/utils/async.js'
-import { PolymerElement } from '@polymer/polymer/polymer-element.js'
-import { flowComponentDirective } from './flow-component-directive.js'
+import '@polymer/polymer/lib/elements/dom-if.js';
+import { html } from '@polymer/polymer/lib/utils/html-tag.js';
+import { Debouncer } from '@polymer/polymer/lib/utils/debounce.js';
+import { idlePeriod } from '@polymer/polymer/lib/utils/async.js';
+import { PolymerElement } from '@polymer/polymer/polymer-element.js';
+import { flowComponentDirective } from './flow-component-directive.js';
 
 /**
  * Returns the requested node from the Flow client.
@@ -11,8 +11,8 @@ import { flowComponentDirective } from './flow-component-directive.js'
  * @param {number} nodeid
  * @returns {Element | null} The element if found, null otherwise.
  */
-function getNodeInternal (appid, nodeid) {
-  return window.Vaadin.Flow.clients[appid].getByNodeId(nodeid)
+function getNodeInternal(appid, nodeid) {
+  return window.Vaadin.Flow.clients[appid].getByNodeId(nodeid);
 }
 
 /**
@@ -21,8 +21,8 @@ function getNodeInternal (appid, nodeid) {
  * @param {number} nodeid
  * @returns {any} a Lit directive
  */
-function getNode (appid, nodeid) {
-  return flowComponentDirective(appid, nodeid)
+function getNode(appid, nodeid) {
+  return flowComponentDirective(appid, nodeid);
 }
 
 /**
@@ -32,9 +32,9 @@ function getNode (appid, nodeid) {
  * @param {number[]} nodeIds
  * @param {Element} root
  */
-function setChildNodes (appid, nodeIds, root) {
-  root.textContent = ''
-  root.append(...nodeIds.map(id => getNodeInternal(appid, id)))
+function setChildNodes(appid, nodeIds, root) {
+  root.textContent = '';
+  root.append(...nodeIds.map(id => getNodeInternal(appid, id)));
 }
 
 /**
@@ -46,170 +46,167 @@ function setChildNodes (appid, nodeIds, root) {
  * This is a temporary workaround which patches the container's native API
  * to not fail when called with invalid arguments.
  */
-function patchVirtualContainer (container) {
-  const originalInsertBefore = container.insertBefore
+function patchVirtualContainer(container) {
+  const originalInsertBefore = container.insertBefore;
 
   container.insertBefore = function (newNode, referenceNode) {
     if (referenceNode && referenceNode.parentNode === this) {
-      return originalInsertBefore.call(this, newNode, referenceNode)
+      return originalInsertBefore.call(this, newNode, referenceNode);
     } else {
-      return originalInsertBefore.call(this, newNode, null)
+      return originalInsertBefore.call(this, newNode, null);
     }
-  }
+  };
 }
 
-window.Vaadin ||= {}
-window.Vaadin.FlowComponentHost ||= { patchVirtualContainer, getNode, setChildNodes }
+window.Vaadin ||= {};
+window.Vaadin.FlowComponentHost ||= { patchVirtualContainer, getNode, setChildNodes };
 
 class FlowComponentRenderer extends PolymerElement {
-  static get template () {
+  static get template() {
     return html`
-        <style>
-            :host {
-                animation: 1ms flow-component-renderer-appear;
-            }
+      <style>
+        :host {
+          animation: 1ms flow-component-renderer-appear;
+        }
 
-            @keyframes flow-component-renderer-appear {
-                to {
-                    opacity: 1;
-                }
-            }
-        </style>
-        <slot></slot>
-    `
+        @keyframes flow-component-renderer-appear {
+          to {
+            opacity: 1;
+          }
+        }
+      </style>
+      <slot></slot>
+    `;
   }
 
-  static get is () {
-    return 'flow-component-renderer'
+  static get is() {
+    return 'flow-component-renderer';
   }
-
-  static get properties () {
+  static get properties() {
     return {
       nodeid: Number,
       appid: String,
-    }
+    };
+  }
+  static get observers() {
+    return ['_attachRenderedComponentIfAble(appid, nodeid)'];
   }
 
-  static get observers () {
-    return ['_attachRenderedComponentIfAble(appid, nodeid)']
-  }
-
-  ready () {
-    super.ready()
+  ready() {
+    super.ready();
     this.addEventListener('click', function (event) {
       if (
         this.firstChild &&
         typeof this.firstChild.click === 'function' &&
         event.target === this
       ) {
-        event.stopPropagation()
-        this.firstChild.click()
+        event.stopPropagation();
+        this.firstChild.click();
       }
-    })
-    this.addEventListener('animationend', this._onAnimationEnd)
+    });
+    this.addEventListener('animationend', this._onAnimationEnd);
   }
 
-  _asyncAttachRenderedComponentIfAble () {
+  _asyncAttachRenderedComponentIfAble() {
     this._debouncer = Debouncer.debounce(this._debouncer, idlePeriod, () =>
       this._attachRenderedComponentIfAble()
-    )
+    );
   }
 
-  _attachRenderedComponentIfAble () {
+  _attachRenderedComponentIfAble() {
     if (!this.nodeid || !this.appid) {
-      return
+      return;
     }
-    const renderedComponent = this._getRenderedComponent()
+    const renderedComponent = this._getRenderedComponent();
     if (this.firstChild) {
       if (!renderedComponent) {
-        this._asyncAttachRenderedComponentIfAble()
+        this._asyncAttachRenderedComponentIfAble();
       } else if (this.firstChild !== renderedComponent) {
-        this.replaceChild(renderedComponent, this.firstChild)
-        this._defineFocusTarget()
-        this.onComponentRendered()
+        this.replaceChild(renderedComponent, this.firstChild);
+        this._defineFocusTarget();
+        this.onComponentRendered();
       } else {
-        this._defineFocusTarget()
-        this.onComponentRendered()
+        this._defineFocusTarget();
+        this.onComponentRendered();
       }
     } else {
       if (renderedComponent) {
-        this.appendChild(renderedComponent)
-        this._defineFocusTarget()
-        this.onComponentRendered()
+        this.appendChild(renderedComponent);
+        this._defineFocusTarget();
+        this.onComponentRendered();
       } else {
-        this._asyncAttachRenderedComponentIfAble()
+        this._asyncAttachRenderedComponentIfAble();
       }
     }
   }
 
-  _getRenderedComponent () {
+  _getRenderedComponent() {
     try {
-      return window.Vaadin.Flow.clients[this.appid].getByNodeId(this.nodeid)
+      return window.Vaadin.Flow.clients[this.appid].getByNodeId(this.nodeid);
     } catch (error) {
       console.error(
         'Could not get node %s from app %s',
         this.nodeid,
         this.appid
-      )
-      console.error(error)
+      );
+      console.error(error);
     }
-    return null
+    return null;
   }
 
-  onComponentRendered () {
+  onComponentRendered() {
     // subclasses can override this method to execute custom logic on resize
   }
 
   /* Setting the `focus-target` attribute to the first focusable descendant
   starting from the firstChild necessary for the focus to be delegated
   within the flow-component-renderer when used inside a vaadin-grid cell  */
-  _defineFocusTarget () {
-    var focusable = this._getFirstFocusableDescendant(this.firstChild)
+  _defineFocusTarget() {
+    var focusable = this._getFirstFocusableDescendant(this.firstChild);
     if (focusable !== null) {
-      focusable.setAttribute('focus-target', 'true')
+      focusable.setAttribute('focus-target', 'true');
     }
   }
 
-  _getFirstFocusableDescendant (node) {
+  _getFirstFocusableDescendant(node) {
     if (this._isFocusable(node)) {
-      return node
+      return node;
     }
     if (node.hasAttribute && (node.hasAttribute('disabled') || node.hasAttribute('hidden'))) {
-      return null
+      return null;
     }
     if (!node.children) {
-      return null
+      return null;
     }
     for (var i = 0; i < node.children.length; i++) {
-      var focusable = this._getFirstFocusableDescendant(node.children[i])
+      var focusable = this._getFirstFocusableDescendant(node.children[i]);
       if (focusable !== null) {
-        return focusable
+        return focusable;
       }
     }
-    return null
+    return null;
   }
 
-  _isFocusable (node) {
+  _isFocusable(node) {
     if (
       node.hasAttribute &&
       typeof node.hasAttribute === 'function' &&
       (node.hasAttribute('disabled') || node.hasAttribute('hidden'))
     ) {
-      return false
+      return false;
     }
 
-    return node.tabIndex === 0
+    return node.tabIndex === 0;
   }
 
-  _onAnimationEnd (e) {
+  _onAnimationEnd(e) {
     // ShadyCSS applies scoping suffixes to animation names
     // To ensure that child is attached once element is unhidden
     // for when it was filtered out from, eg, ComboBox
     // https://github.com/vaadin/vaadin-flow-components/issues/437
     if (e.animationName.indexOf('flow-component-renderer-appear') === 0) {
-      this._attachRenderedComponentIfAble()
+      this._attachRenderedComponentIfAble();
     }
   }
 }
-
-window.customElements.define(FlowComponentRenderer.is, FlowComponentRenderer)
+window.customElements.define(FlowComponentRenderer.is, FlowComponentRenderer);

@@ -1,45 +1,45 @@
-import MobileDragDrop from 'mobile-drag-drop/index.js'
+import MobileDragDrop from 'mobile-drag-drop/index.js';
 
 (function () {
-  window.Vaadin = window.Vaadin || {}
+  window.Vaadin = window.Vaadin || {};
 
   // Inspired by https://github.com/timruffles/mobile-drag-drop/issues/115#issuecomment-375469457
-  function tryFindDraggableTarget (event) {
+  function tryFindDraggableTarget(event) {
     if (window.Vaadin.__mobilePolyfillTouchStartPath) {
-      const cp = window.Vaadin.__mobilePolyfillTouchStartPath
+      const cp = window.Vaadin.__mobilePolyfillTouchStartPath;
       for (const o of cp) {
-        let el = o
+        let el = o;
         do {
           if (el.getAttribute && el.getAttribute('draggable') === 'true') {
-            return el
+            return el;
           }
-        } while ((el = el.parentNode) && el !== document.body)
+        } while ((el = el.parentNode) && el !== document.body);
       }
     }
   }
 
-  function elementFromPoint (x, y) {
+  function elementFromPoint(x, y) {
     for (const o of this._path) {
       if (o.elementFromPoint) {
-        let el = o.elementFromPoint(x, y)
+        let el = o.elementFromPoint(x, y);
         if (el) {
           while (el.shadowRoot) {
-            const fromPoint = el.shadowRoot.elementFromPoint(x, y)
+            const fromPoint = el.shadowRoot.elementFromPoint(x, y);
             if (el === fromPoint) {
-              return el
+              return el;
             } else {
-              el = fromPoint
+              el = fromPoint;
             }
           }
-          return el
+          return el;
         }
       }
     }
   }
 
-  function dragStartConditionOverride (event) {
-    this._path = event.composedPath()
-    return true
+  function dragStartConditionOverride(event) {
+    this._path = event.composedPath();
+    return true;
   }
 
   const config = {
@@ -47,17 +47,17 @@ import MobileDragDrop from 'mobile-drag-drop/index.js'
     dragStartConditionOverride,
     holdToDrag: 300,
     forceApply: window.Vaadin.__forceApplyMobileDragDrop
-  }
+  };
   if (!window.ShadyDOM) {
-    config.elementFromPoint = elementFromPoint
+    config.elementFromPoint = elementFromPoint;
   }
 
   if (MobileDragDrop.polyfill(config)) {
     document.addEventListener('touchstart', (e) => {
-      window.Vaadin.__mobilePolyfillTouchStartPath = e.composedPath()
-    })
+      window.Vaadin.__mobilePolyfillTouchStartPath = e.composedPath();
+    });
     document.addEventListener('touchmove', (e) => {
-      delete window.Vaadin.__mobilePolyfillTouchStartPath
-    })
+      delete window.Vaadin.__mobilePolyfillTouchStartPath;
+    });
   }
-})()
+})();

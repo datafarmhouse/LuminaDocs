@@ -1,50 +1,50 @@
-import { noChange } from 'lit'
-import { directive, Directive, PartType } from 'lit/directive.js'
+import { noChange } from 'lit';
+import { directive, Directive, PartType } from 'lit/directive.js';
 
 class FlowComponentDirective extends Directive {
-  constructor (partInfo) {
-    super(partInfo)
+  constructor(partInfo) {
+    super(partInfo);
     if (partInfo.type !== PartType.CHILD) {
-      throw new Error(`${this.constructor.directiveName}() can only be used in child bindings`)
+      throw new Error(`${this.constructor.directiveName}() can only be used in child bindings`);
     }
   }
 
-  update (part, [appid, nodeid]) {
-    this.updateContent(part, appid, nodeid)
-    return noChange
+  update(part, [appid, nodeid]) {
+    this.updateContent(part, appid, nodeid);
+    return noChange;
   }
 
-  updateContent (part, appid, nodeid) {
-    const { parentNode, startNode } = part
+  updateContent(part, appid, nodeid) {
+    const { parentNode, startNode } = part;
 
-    const hasNewNodeId = nodeid !== undefined && nodeid !== null
-    const newNode = hasNewNodeId ? this.getNewNode(appid, nodeid) : null
-    const oldNode = this.getOldNode(part)
+    const hasNewNodeId = nodeid !== undefined && nodeid !== null;
+    const newNode = hasNewNodeId ? this.getNewNode(appid, nodeid) : null;
+    const oldNode = this.getOldNode(part);
 
     if (hasNewNodeId && !newNode) {
       // If the node is not found, try again later.
-      setTimeout(() => this.updateContent(part, appid, nodeid))
+      setTimeout(() => this.updateContent(part, appid, nodeid));
     } else if (oldNode === newNode) {
-      return
+      return;
     } else if (oldNode && newNode) {
-      parentNode.replaceChild(newNode, oldNode)
+      parentNode.replaceChild(newNode, oldNode);
     } else if (oldNode) {
-      parentNode.removeChild(oldNode)
+      parentNode.removeChild(oldNode);
     } else if (newNode) {
-      startNode.after(newNode)
+      startNode.after(newNode);
     }
   }
 
-  getNewNode (appid, nodeid) {
-    return window.Vaadin.Flow.clients[appid].getByNodeId(nodeid)
+  getNewNode(appid, nodeid) {
+    return window.Vaadin.Flow.clients[appid].getByNodeId(nodeid);
   }
 
-  getOldNode (part) {
-    const { startNode, endNode } = part
+  getOldNode(part) {
+    const { startNode, endNode } = part;
     if (startNode.nextSibling === endNode) {
-      return
+      return;
     }
-    return startNode.nextSibling
+    return startNode.nextSibling;
   }
 }
 
@@ -57,4 +57,4 @@ class FlowComponentDirective extends Directive {
  * @param {number} nodeid
  * @private
  */
-export const flowComponentDirective = directive(FlowComponentDirective)
+export const flowComponentDirective = directive(FlowComponentDirective);

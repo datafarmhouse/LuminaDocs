@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import './contextMenuConnector.js'
+import './contextMenuConnector.js';
 
 (function () {
   const tryCatchWrapper = function (callback) {
-    return window.Vaadin.Flow.tryCatchWrapper(callback, 'Vaadin Menu Bar')
-  }
+    return window.Vaadin.Flow.tryCatchWrapper(callback, 'Vaadin Menu Bar');
+  };
 
   /**
    * Initializes the connector for a menu bar element.
@@ -26,22 +26,22 @@ import './contextMenuConnector.js'
    * @param {HTMLElement} menubar
    * @param {string} appId
    */
-  function initLazy (menubar, appId) {
+  function initLazy(menubar, appId) {
     if (menubar.$connector) {
-      return
+      return;
     }
 
     const observer = new MutationObserver((records) => {
       const hasChangedAttributes = records.some((entry) => {
-        const oldValue = entry.oldValue
-        const newValue = entry.target.getAttribute(entry.attributeName)
-        return oldValue !== newValue
-      })
+        const oldValue = entry.oldValue;
+        const newValue = entry.target.getAttribute(entry.attributeName);
+        return oldValue !== newValue;
+      });
 
       if (hasChangedAttributes) {
-        menubar.$connector.generateItems()
+        menubar.$connector.generateItems();
       }
-    })
+    });
 
     menubar.$connector = {
       /**
@@ -56,25 +56,25 @@ import './contextMenuConnector.js'
       generateItems: tryCatchWrapper((nodeId) => {
         if (!menubar.shadowRoot) {
           // workaround for https://github.com/vaadin/flow/issues/5722
-          setTimeout(() => menubar.$connector.generateItems(nodeId))
-          return
+          setTimeout(() => menubar.$connector.generateItems(nodeId));
+          return;
         }
 
         if (nodeId) {
-          menubar.__generatedItems = window.Vaadin.Flow.contextMenuConnector.generateItemsTree(appId, nodeId)
+          menubar.__generatedItems = window.Vaadin.Flow.contextMenuConnector.generateItemsTree(appId, nodeId);
         }
 
-        let items = menubar.__generatedItems || []
+        let items = menubar.__generatedItems || [];
 
         // Propagate disabled state from items to parent buttons
-        items.forEach((item) => (item.disabled = item.component.disabled))
+        items.forEach((item) => (item.disabled = item.component.disabled));
 
         // Remove hidden items entirely from the array. Just hiding them
         // could cause the overflow button to be rendered without items.
         //
         // The items-prop needs to be set even when all items are visible
         // to update the disabled state and re-render buttons.
-        items = items.filter((item) => !item.component.hidden)
+        items = items.filter((item) => !item.component.hidden);
 
         // Observe for hidden and disabled attributes in case they are changed by Flow.
         // When a change occurs, the observer will re-generate items on top of the existing tree
@@ -83,29 +83,29 @@ import './contextMenuConnector.js'
           observer.observe(item.component, {
             attributeFilter: ['hidden', 'disabled'],
             attributeOldValue: true
-          })
-        })
+          });
+        });
 
-        menubar.items = items
+        menubar.items = items;
 
         // Propagate click events from the menu buttons to the item components
         menubar._buttons.forEach((button) => {
           if (button.item && button.item.component) {
             button.addEventListener('click', (e) => {
               if (e.composedPath().indexOf(button.item.component) === -1) {
-                button.item.component.click()
-                e.stopPropagation()
+                button.item.component.click();
+                e.stopPropagation();
               }
-            })
+            });
           }
-        })
+        });
       })
-    }
+    };
   }
 
   window.Vaadin.Flow.menubarConnector = {
-    initLazy (...args) {
-      return tryCatchWrapper(initLazy)(...args)
+    initLazy(...args) {
+      return tryCatchWrapper(initLazy)(...args);
     }
-  }
-})()
+  };
+})();

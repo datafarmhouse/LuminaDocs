@@ -1,14 +1,13 @@
-import '@vaadin/grid/vaadin-grid-column.js'
-import { GridColumn } from '@vaadin/grid/src/vaadin-grid-column.js'
-
+import '@vaadin/grid/vaadin-grid-column.js';
+import { GridColumn } from '@vaadin/grid/src/vaadin-grid-column.js';
 {
   class GridFlowSelectionColumnElement extends GridColumn {
 
-    static get is () {
-      return 'vaadin-grid-flow-selection-column'
+    static get is() {
+      return 'vaadin-grid-flow-selection-column';
     }
 
-    static get properties () {
+    static get properties() {
       return {
 
         /**
@@ -55,36 +54,36 @@ import { GridColumn } from '@vaadin/grid/src/vaadin-grid-column.js'
         },
 
         selectAllHidden: Boolean
-      }
+      };
     }
 
-    constructor () {
-      super()
-      this._boundOnSelectEvent = this._onSelectEvent.bind(this)
-      this._boundOnDeselectEvent = this._onDeselectEvent.bind(this)
+    constructor() {
+      super();
+      this._boundOnSelectEvent = this._onSelectEvent.bind(this);
+      this._boundOnDeselectEvent = this._onDeselectEvent.bind(this);
     }
 
-    static get observers () {
+    static get observers() {
       return [
         '_onHeaderRendererOrBindingChanged(_headerRenderer, _headerCell, path, header, selectAll, indeterminate, selectAllHidden)'
-      ]
+      ];
     }
 
     /** @private */
-    connectedCallback () {
-      super.connectedCallback()
+    connectedCallback() {
+      super.connectedCallback();
       if (this._grid) {
-        this._grid.addEventListener('select', this._boundOnSelectEvent)
-        this._grid.addEventListener('deselect', this._boundOnDeselectEvent)
+        this._grid.addEventListener('select', this._boundOnSelectEvent);
+        this._grid.addEventListener('deselect', this._boundOnDeselectEvent);
       }
     }
 
     /** @private */
-    disconnectedCallback () {
-      super.disconnectedCallback()
+    disconnectedCallback() {
+      super.disconnectedCallback();
       if (this._grid) {
-        this._grid.removeEventListener('select', this._boundOnSelectEvent)
-        this._grid.removeEventListener('deselect', this._boundOnDeselectEvent)
+        this._grid.removeEventListener('select', this._boundOnSelectEvent);
+        this._grid.removeEventListener('deselect', this._boundOnDeselectEvent);
       }
     }
 
@@ -93,21 +92,21 @@ import { GridColumn } from '@vaadin/grid/src/vaadin-grid-column.js'
      *
      * @override
      */
-    _defaultHeaderRenderer (root, _column) {
-      let checkbox = root.firstElementChild
+    _defaultHeaderRenderer(root, _column) {
+      let checkbox = root.firstElementChild;
       if (!checkbox) {
-        checkbox = document.createElement('vaadin-checkbox')
-        checkbox.id = 'selectAllCheckbox'
-        checkbox.setAttribute('aria-label', 'Select All')
-        checkbox.classList.add('vaadin-grid-select-all-checkbox')
-        checkbox.addEventListener('click', this._onSelectAllClick.bind(this))
-        root.appendChild(checkbox)
+        checkbox = document.createElement('vaadin-checkbox');
+        checkbox.id = 'selectAllCheckbox';
+        checkbox.setAttribute('aria-label', 'Select All');
+        checkbox.classList.add('vaadin-grid-select-all-checkbox');
+        checkbox.addEventListener('click', this._onSelectAllClick.bind(this));
+        root.appendChild(checkbox);
       }
 
-      const checked = this.selectAll
-      checkbox.hidden = this.selectAllHidden
-      checkbox.checked = checked
-      checkbox.indeterminate = this.indeterminate
+      const checked = this.selectAll;
+      checkbox.hidden = this.selectAllHidden;
+      checkbox.checked = checked;
+      checkbox.indeterminate = this.indeterminate;
     }
 
     /**
@@ -115,43 +114,43 @@ import { GridColumn } from '@vaadin/grid/src/vaadin-grid-column.js'
      *
      * @override
      */
-    _defaultRenderer (root, _column, { item, selected }) {
-      let checkbox = root.firstElementChild
+    _defaultRenderer(root, _column, { item, selected }) {
+      let checkbox = root.firstElementChild;
       if (!checkbox) {
-        checkbox = document.createElement('vaadin-checkbox')
-        checkbox.setAttribute('aria-label', 'Select Row')
-        checkbox.addEventListener('click', this._onSelectClick.bind(this))
-        root.appendChild(checkbox)
+        checkbox = document.createElement('vaadin-checkbox');
+        checkbox.setAttribute('aria-label', 'Select Row');
+        checkbox.addEventListener('click', this._onSelectClick.bind(this));
+        root.appendChild(checkbox);
       }
 
-      checkbox.__item = item
-      checkbox.checked = selected
+      checkbox.__item = item;
+      checkbox.checked = selected;
     }
 
-    _onSelectClick (e) {
-      e.currentTarget.checked ? this._grid.$connector.doDeselection([e.currentTarget.__item], true) : this._grid.$connector.doSelection([e.currentTarget.__item], true)
+    _onSelectClick(e) {
+      e.currentTarget.checked ? this._grid.$connector.doDeselection([e.currentTarget.__item], true) : this._grid.$connector.doSelection([e.currentTarget.__item], true);
     }
 
-    _onSelectAllClick (e) {
-      e.preventDefault()
+    _onSelectAllClick(e) {
+      e.preventDefault();
       if (this._grid.hasAttribute('disabled')) {
-        e.currentTarget.checked = !e.currentTarget.checked
-        return
+        e.currentTarget.checked = !e.currentTarget.checked;
+        return;
       }
-      this.selectAll ? this.$server.deselectAll() : this.$server.selectAll()
+      this.selectAll ? this.$server.deselectAll() : this.$server.selectAll();
     }
 
-    _onSelectEvent (e) {
+    _onSelectEvent(e) {
     }
 
-    _onDeselectEvent (e) {
+    _onDeselectEvent(e) {
       if (e.detail.userOriginated) {
-        this.selectAll = false
+        this.selectAll = false;
       }
     }
   }
 
-  customElements.define(GridFlowSelectionColumnElement.is, GridFlowSelectionColumnElement)
+  customElements.define(GridFlowSelectionColumnElement.is, GridFlowSelectionColumnElement);
 
-  Vaadin.GridFlowSelectionColumnElement = GridFlowSelectionColumnElement
+  Vaadin.GridFlowSelectionColumnElement = GridFlowSelectionColumnElement;
 }

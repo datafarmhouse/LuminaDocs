@@ -1,15 +1,20 @@
 package be.datafarmhouse.luminadocs.ui.views;
 
+import be.datafarmhouse.luminadocs.LuminaDocsRequest;
 import be.datafarmhouse.luminadocs.template.TemplateService;
 import be.datafarmhouse.luminadocs.template.data.*;
 import be.datafarmhouse.luminadocs.ui.Layout;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Html;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.IFrame;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
@@ -26,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.Arrays;
+import java.util.Map;
 
 @Log4j2
 @PageTitle("LuminaDocs | Templates")
@@ -43,14 +49,15 @@ public class TemplatesView extends Div {
     private TextField nameField;
     private TextArea contentField;
     private TextArea testVarField;
-    private Html preview;
+    private IFrame preview;
     private ComboBox<PDFEngineData> pdfEngineComboBox;
     private ComboBox<TemplateEngineData> templateEngineComboBox;
     private ComboBox<CSSData> cssComboBox;
     private VerticalLayout rightLayout;
     private Binder<TemplateData> binder;
+    private Html templateName;
 
-    private Button newButton;
+    private Button createButton;
     private Button saveButton;
     private Button cancelButton;
 
@@ -64,6 +71,7 @@ public class TemplatesView extends Div {
     }
 
     private void initView() {
+        binder = new Binder<>(TemplateData.class);
         SplitLayout splitLayout = new SplitLayout();
         splitLayout.setSizeFull();
 
@@ -71,12 +79,12 @@ public class TemplatesView extends Div {
         grid.setColumns("code");
         grid.asSingleSelect().addValueChangeListener(event -> setSelection(event.getValue()));
 
-        newButton = new Button(VaadinIcon.PLUS_SQUARE_O.create());
-        newButton.addClickListener(event -> setSelection(new TemplateData()));
+        createButton = new Button("Create", VaadinIcon.PLUS_SQUARE_O.create());
+        createButton.addClickListener(event -> setSelection(new TemplateData()));
 
         VerticalLayout leftLayout = new VerticalLayout();
         leftLayout.setSizeFull();
-        leftLayout.add(new HorizontalLayout(newButton));
+        leftLayout.add(new HorizontalLayout(createButton));
         leftLayout.add(grid);
 
         rightLayout = new VerticalLayout();
@@ -86,7 +94,7 @@ public class TemplatesView extends Div {
 
         splitLayout.addToPrimary(leftLayout);
         splitLayout.addToSecondary(rightLayout);
-        splitLayout.setSplitterPosition(20);
+        splitLayout.setSplitterPosition(15);
 
         add(splitLayout);
     }
@@ -107,6 +115,7 @@ public class TemplatesView extends Div {
             rightLayout.setVisible(true);
             selection = template;
             binder.setBean(template);
+            templateName.setHtmlContent("<h2>" + template.getName() + "</h2>");
         } else {
             rightLayout.setVisible(false);
             binder.setBean(null);
@@ -115,39 +124,35 @@ public class TemplatesView extends Div {
         }
     }
 
-    private HorizontalLayout createButtonPanel() {
-        saveButton = new Button(VaadinIcon.FILE.create());
-        saveButton.addClickListener(event -> {
-            templateRepository.save(selection);
-            setSelection(null);
-        });
-        cancelButton = new Button(VaadinIcon.ARROW_LONG_LEFT.create());
-        cancelButton.addClickListener(event -> {
-            setSelection(null);
-        });
-        final HorizontalLayout layout = new HorizontalLayout(saveButton, cancelButton);
-        layout.setWidthFull();
-        return layout;
+    private Component createButtonPanel() {
+        templateName = new Html("<h2></h2>");
+
+        saveButton = new Button("Save", VaadinIcon.FILE.create());
+        saveButton.addClickListener(event -> templateRepository.save(selection));
+        cancelButton = new Button("Cancel", VaadinIcon.BAN.create());
+        cancelButton.addClickListener(event -> setSelection(null));
+
+        final FlexLayout buttons = new FlexLayout(saveButton, cancelButton);
+        buttons.setWidthFull();
+        buttons.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+        return new VerticalLayout(templateName, buttons);
     }
 
     private VerticalLayout createForm() {
-        binder = new Binder<>(TemplateData.class);
-
         codeField = new TextField("Code");
         codeField.setWidthFull();
         binder.forField(codeField).bind(TemplateData::getCode, TemplateData::setCode);
         nameField = new TextField("Name");
         nameField.setWidthFull();
+        nameField.addValueChangeListener(event -> templateName.setHtmlContent("<h2>" + event.getValue() + "</h2>"));
         binder.forField(nameField).bind(TemplateData::getName, TemplateData::setName);
         contentField = new TextArea("Content");
         contentField.setWidthFull();
         contentField.setHeight("500px");
-        preview = new Html("<div>preview</div>");
         contentField.addValueChangeListener(event -> render());
-        final Div previewDiv = new Div(preview);
-        previewDiv.setWidthFull();
-        previewDiv.setHeight("500px");
-        previewDiv.setTitle("Preview");
+        preview = new IFrame("data:text/html;charset=utf-8,<html></html>");
+        preview.setWidthFull();
+        preview.setHeight("500px");
         binder.forField(contentField).bind(TemplateData::getContent, TemplateData::setContent);
 
         testVarField = new TextArea("Test Variables");
@@ -174,7 +179,10 @@ public class TemplatesView extends Div {
         tab1Content.setSizeFull();
         tab1Content.setPadding(true);
         tab1Content.setSpacing(true);
-        HorizontalLayout tab2Content = new HorizontalLayout(contentField, previewDiv);
+        final VerticalLayout previewLayout = new VerticalLayout(new Html("<label>Preview</label>"), preview);
+        previewLayout.setSpacing(true);
+        previewLayout.setPadding(false);
+        HorizontalLayout tab2Content = new HorizontalLayout(contentField, previewLayout);
         tab2Content.setVisible(false);
         tab2Content.setSizeFull();
         HorizontalLayout tab3Content = new HorizontalLayout(testVarField);
@@ -211,31 +219,33 @@ public class TemplatesView extends Div {
         return new VerticalLayout(tabs, tabsContent);
     }
 
+    protected void setPreview(final String html) {
+        preview.setSrc("data:text/html;charset=utf-8," + html);
+    }
+
     protected void render() {
-        preview.setHtmlContent("<div>work in progress</div>");
-        /*if (selection == null) {
-            preview.setHtmlContent("<div>preview</div>");
+        if (selection == null) {
+            setPreview("<div>preview</div>");
         } else {
             try {
                 final LuminaDocsRequest.Template template = new LuminaDocsRequest.Template();
                 final LuminaDocsRequest.CSS css = new LuminaDocsRequest.CSS();
-                template.setDebug(true);
-                template.setCode(selection.getCode());
+                template.setDebug(false);
+                template.setContent(contentField.getValue());
                 template.setVariables(mapper.readValue(selection.getTestVars(), Map.class));
                 template.setEngine(selection.getTemplateEngine().name());
                 template.setCss(css);
                 css.setCode(selection.getCss() == null ? null : selection.getCss().getCode());
 
-                preview.setHtmlContent(
+                setPreview(
                         templateService.generateHTML(template).getHtml()
                 );
             } catch (final Throwable t) {
-                preview.setHtmlContent(
+                setPreview(
                         "<div>" + t.getMessage() + "</div>"
                 );
-                log.error("Render failed.", t);
             }
-        }*/
+        }
     }
 }
 

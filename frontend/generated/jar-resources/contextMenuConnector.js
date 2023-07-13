@@ -1,14 +1,14 @@
 (function () {
-  function tryCatchWrapper (callback) {
-    return window.Vaadin.Flow.tryCatchWrapper(callback, 'Vaadin Context Menu')
+  function tryCatchWrapper(callback) {
+    return window.Vaadin.Flow.tryCatchWrapper(callback, 'Vaadin Context Menu');
   }
 
-  function getContainer (appId, nodeId) {
+  function getContainer(appId, nodeId) {
     try {
-      return window.Vaadin.Flow.clients[appId].getByNodeId(nodeId)
+      return window.Vaadin.Flow.clients[appId].getByNodeId(nodeId);
     } catch (error) {
-      console.error('Could not get node %s from app %s', nodeId, appId)
-      console.error(error)
+      console.error('Could not get node %s from app %s', nodeId, appId);
+      console.error(error);
     }
   }
 
@@ -18,9 +18,9 @@
    * @param {HTMLElement} contextMenu
    * @param {string} appId
    */
-  function initLazy (contextMenu, appId) {
+  function initLazy(contextMenu, appId) {
     if (contextMenu.$connector) {
-      return
+      return;
     }
 
     contextMenu.$connector = {
@@ -30,11 +30,11 @@
        * @param {number} nodeId
        */
       generateItems: tryCatchWrapper((nodeId) => {
-        const items = generateItemsTree(appId, nodeId)
+        const items = generateItemsTree(appId, nodeId);
 
-        contextMenu.items = items
+        contextMenu.items = items;
       })
-    }
+    };
   }
 
   /**
@@ -47,10 +47,10 @@
    * @param {string} appId
    * @param {number} nodeId
    */
-  function generateItemsTree (appId, nodeId) {
-    const container = getContainer(appId, nodeId)
+  function generateItemsTree(appId, nodeId) {
+    const container = getContainer(appId, nodeId);
     if (!container) {
-      return
+      return;
     }
 
     return Array.from(container.children).map((child) => {
@@ -58,14 +58,14 @@
         component: child,
         checked: child._checked,
         theme: child.__theme
-      }
+      };
       // Do not hardcode tag name to allow `vaadin-menu-bar-item`
       if (child._hasVaadinItemMixin && child._containerNodeId) {
-        item.children = generateItemsTree(appId, child._containerNodeId)
+        item.children = generateItemsTree(appId, child._containerNodeId);
       }
-      child._item = item
-      return item
-    })
+      child._item = item;
+      return item;
+    });
   }
 
   /**
@@ -77,9 +77,9 @@
    * @param {HTMLElement} component
    * @param {boolean} checked
    */
-  function setChecked (component, checked) {
+  function setChecked(component, checked) {
     if (component._item) {
-      component._item.checked = checked
+      component._item.checked = checked;
     }
   }
 
@@ -92,27 +92,27 @@
    * @param {HTMLElement} component
    * @param {string | undefined | null} theme
    */
-  function setTheme (component, theme) {
+  function setTheme(component, theme) {
     if (component._item) {
-      component._item.theme = theme
+      component._item.theme = theme;
     }
   }
 
   window.Vaadin.Flow.contextMenuConnector = {
-    initLazy (...args) {
-      return tryCatchWrapper(initLazy)(...args)
+    initLazy(...args) {
+      return tryCatchWrapper(initLazy)(...args);
     },
 
-    generateItemsTree (...args) {
-      return tryCatchWrapper(generateItemsTree)(...args)
+    generateItemsTree(...args) {
+      return tryCatchWrapper(generateItemsTree)(...args);
     },
 
-    setChecked (...args) {
-      return tryCatchWrapper(setChecked)(...args)
+    setChecked(...args) {
+      return tryCatchWrapper(setChecked)(...args);
     },
 
-    setTheme (...args) {
-      return tryCatchWrapper(setTheme)(...args)
+    setTheme(...args) {
+      return tryCatchWrapper(setTheme)(...args);
     }
-  }
-})()
+  };
+})();
