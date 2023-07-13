@@ -1,5 +1,10 @@
 package be.datafarmhouse.luminadocs.template;
 
+import be.datafarmhouse.luminadocs.LuminaDocsRequest;
+import be.datafarmhouse.luminadocs.template.data.CSSData;
+import be.datafarmhouse.luminadocs.template.data.CSSRepository;
+import be.datafarmhouse.luminadocs.template.data.TemplateData;
+import be.datafarmhouse.luminadocs.template.data.TemplateRepository;
 import be.datafarmhouse.luminadocs.template.engine.TemplateEngine;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -9,7 +14,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Log4j2
@@ -17,26 +21,68 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class TemplateService {
 
+    private final CSSRepository cssRepository;
+    private final TemplateRepository templateRepository;
     private final List<TemplateEngine> engines;
 
     @SneakyThrows
-    public String generateHTML(final boolean debug, final String selectedEngine, final String template, final Map<String, Object> variables, final String cssLib) {
-        for (final TemplateEngine engine : engines) {
-            if (StringUtils.equalsIgnoreCase(engine.getName(), selectedEngine)) {
-                final StopWatch stopWatch = StopWatch.createStarted();
-                final String html =
-                        "<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"" + cssLib + ".css\"/></head><body>" +
-                                engine.process(template, variables) +
-                                "</body></html>";
-                if (debug) {
-                    log.info("Generated:");
-                    log.info(html);
-                }
-                log.info("HTML generation took {}ms.", stopWatch.getTime(TimeUnit.MILLISECONDS));
-                return html;
-            }
+    public TemplateResult generateHTML(final LuminaDocsRequest.Template requestTemplate) {
+        final TemplateEngine engine = getEngineForName(requestTemplate.getEngine());
+        final StopWatch stopWatch = StopWatch.createStarted();
+
+        String pdfEngine = null;
+        final String css;
+        final String template;
+        if (StringUtils.isNotBlank(requestTemplate.getCode())) {
+            final TemplateData storedTemplate = templateRepository.getReferenceById(requestTemplate.getCode());
+            css = getCSS(requestTemplate.getCss(), storedTemplate.getCss());
+            template = storedTemplate.getContent();
+            pdfEngine = storedTemplate.getPdfEngine().name();
+        } else {
+            css = getCSS(requestTemplate.getCss(), null);
+            template = requestTemplate.getContent();
         }
 
-        return "TemplateEngine could not be found.";
+
+        final StringBuilder html = new StringBuilder()
+                .append("<html><head>")
+                .append(css)
+                .append("</head><body>")
+                .append(engine.process(template, requestTemplate.getVariables()))
+                .append("</body></html>");
+
+        if (requestTemplate.isDebug()) {
+            log.info(html.toString());
+        }
+
+        log.info("HTML generation took {}ms.", stopWatch.getTime(TimeUnit.MILLISECONDS));
+        return TemplateResult.builder()
+                .html(html.toString())
+                .pdfEngine(pdfEngine)
+                .build();
+    }
+
+    protected String getCSS(final LuminaDocsRequest.CSS requestCSS, CSSData templateCSS) {
+        final StringBuilder sb = new StringBuilder("<style>");
+        if (StringUtils.isNotBlank(requestCSS.getCode())) {
+            final CSSData cssData = cssRepository.getReferenceById(requestCSS.getCode());
+            sb.append(cssData.getContent());
+        } else if (StringUtils.isNotBlank(requestCSS.getContent())) {
+            sb.append(requestCSS.getContent());
+        } else if (templateCSS != null) {
+            sb.append(templateCSS.getContent());
+        }
+        sb.append("</style>");
+        return sb.toString();
+    }
+
+    protected TemplateEngine getEngineForName(final String name) {
+        final String selection = StringUtils.isBlank(name) ? "freemarker" : name;
+        for (final TemplateEngine engine : engines) {
+            if (StringUtils.equalsIgnoreCase(engine.getName(), selection)) {
+                return engine;
+            }
+        }
+        throw new RuntimeException("Template Engine not found for name: " + name);
     }
 }

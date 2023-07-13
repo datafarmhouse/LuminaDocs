@@ -15,8 +15,8 @@ public class LuminaDocsController {
 
     private final LuminaDocsService luminaDocsService;
 
+    @PostMapping("/api")
     @SneakyThrows
-    @PostMapping("/")
     public void generatePDF(
             @RequestBody final LuminaDocsRequest documentRequest,
             final HttpServletResponse response

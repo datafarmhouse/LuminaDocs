@@ -1,4 +1,4 @@
-# LuminaDocs
+# LuminaDocs 1.5
 
 https://hub.docker.com/r/vanleemputteng/luminadocs/tags
 
@@ -14,24 +14,27 @@ Key Features:
    variable values should be inserted, enabling dynamic content generation.
 2. REST API: Supply a JSON containing the variable values that should be used in the template. This allows for flexible
    customization and data-driven document generation.
+3. UI: a UI is available to manage your templates and css. This means you only have to send the template code and the
+   variables to the API.
 
 Whether you need to generate invoices, contracts, reports, or any other type of dynamic document, the Headless Document
 Generator simplifies the process, empowering you to focus on the content while automating the PDF generation. Experience
 the convenience and efficiency of this powerful tool for your document generation needs.
 
 Sample request:
+http POST on /api
 
 ```
 {
-    "engine": {
-        "template":"freemarker",
-        "pdf":"pdfbox"
-    },
     "template":{
+        "debug": false,
+        "engine":"freemarker",
         "css":{
-            "lib":"tailwind"
+            "code":"stored-css-code",
+            "content":"actual css",
         },
-        "body":"<div class='text-orange-500 text-xl rounded-lg border p-2'>hello there: ${test} <br/> <span class='font-bold'>${nested.x}</span> <br/> ${nested.y} <br/> ${nested.y?string.currency}</div>",
+        "code":"stored-template-code",
+        "content":"<div class='text-orange-500 text-xl rounded-lg border p-2'>hello there: ${test} <br/> <span class='font-bold'>${nested.x}</span> <br/> ${nested.y} <br/> ${nested.y?string.currency}</div>",
         "variables":{
             "test":"general kenobi",
             "nested": {
@@ -39,6 +42,9 @@ Sample request:
                 "y": 24.5
             }
         }
+    },
+    "pdf": {
+        "engine":"pdfbox"
     },
     "options":{
         "filename":"test.pdf"
@@ -51,7 +57,7 @@ Minimal request:
 ```
 {
     "template":{
-        "body":"Hello World!"
+        "code":"Hello World!"
     }
 }
 ```
