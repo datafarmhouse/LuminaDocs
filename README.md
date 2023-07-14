@@ -57,7 +57,7 @@ Minimal request:
 ```
 {
     "template":{
-        "code":"Hello World!"
+        "code":"invoice"
     }
 }
 ```
