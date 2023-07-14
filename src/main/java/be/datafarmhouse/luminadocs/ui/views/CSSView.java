@@ -3,6 +3,10 @@ package be.datafarmhouse.luminadocs.ui.views;
 import be.datafarmhouse.luminadocs.template.data.CSSData;
 import be.datafarmhouse.luminadocs.template.data.CSSRepository;
 import be.datafarmhouse.luminadocs.ui.Layout;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Html;
+import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.Div;
@@ -29,6 +33,7 @@ public class CSSView extends Div {
 
     private final CSSRepository cssRepository;
 
+    private ObjectMapper mapper = new ObjectMapper();
     private CSSData selection;
     private Grid<CSSData> grid;
     private TextField codeField;
@@ -36,10 +41,11 @@ public class CSSView extends Div {
     private TextArea contentField;
     private VerticalLayout rightLayout;
     private Binder<CSSData> binder;
+    private Html templateName;
 
-    private Button newButton;
+    private Button createButton;
     private Button saveButton;
-    private Button cancelButton;
+    private DataProvider<CSSData, ?> gridData;
 
     @Autowired
     public CSSView(final CSSRepository cssRepository) {
@@ -49,19 +55,21 @@ public class CSSView extends Div {
     }
 
     private void initView() {
+        binder = new Binder<>(CSSData.class);
         SplitLayout splitLayout = new SplitLayout();
         splitLayout.setSizeFull();
 
         grid = new Grid<>(CSSData.class);
+        grid.setHeight(75, Unit.VH);
         grid.setColumns("code");
         grid.asSingleSelect().addValueChangeListener(event -> setSelection(event.getValue()));
 
-        newButton = new Button(VaadinIcon.PLUS_SQUARE_O.create());
-        newButton.addClickListener(event -> setSelection(new CSSData()));
+        createButton = new Button("ADD", VaadinIcon.FILE_ADD.create());
+        createButton.addClickListener(event -> setSelection(new CSSData()));
 
         VerticalLayout leftLayout = new VerticalLayout();
         leftLayout.setSizeFull();
-        leftLayout.add(new HorizontalLayout(newButton));
+        leftLayout.add(new HorizontalLayout(createButton));
         leftLayout.add(grid);
 
         rightLayout = new VerticalLayout();
@@ -71,20 +79,21 @@ public class CSSView extends Div {
 
         splitLayout.addToPrimary(leftLayout);
         splitLayout.addToSecondary(rightLayout);
-        splitLayout.setSplitterPosition(20);
+        splitLayout.setSplitterPosition(15);
 
         add(splitLayout);
     }
 
     private void loadData() {
-        grid.setDataProvider(DataProvider.fromCallbacks(
+        gridData = DataProvider.fromCallbacks(
                 // First callback fetches items based on the requested range
                 query -> cssRepository.findAll(
                         PageRequest.of(query.getOffset() / query.getLimit(), query.getLimit())
                 ).stream(),
                 // Second callback fetches the total count of items
                 query -> Math.toIntExact(cssRepository.count())
-        ));
+        );
+        grid.setDataProvider(gridData);
     }
 
     private void setSelection(final CSSData template) {
@@ -92,6 +101,7 @@ public class CSSView extends Div {
             rightLayout.setVisible(true);
             selection = template;
             binder.setBean(template);
+            templateName.setHtmlContent("<h2>" + template.getName() + "</h2>");
         } else {
             rightLayout.setVisible(false);
             binder.setBean(null);
@@ -100,34 +110,43 @@ public class CSSView extends Div {
         }
     }
 
-    private HorizontalLayout createButtonPanel() {
-        saveButton = new Button(VaadinIcon.FILE.create());
+    private Component createButtonPanel() {
+        templateName = new Html("<h2></h2>");
+
+        saveButton = new Button("SAVE", VaadinIcon.FILE.create());
         saveButton.addClickListener(event -> {
-            cssRepository.save(selection);
-            setSelection(null);
+            if (selection.getId() == null) {
+                cssRepository.save(selection);
+                setSelection(null);
+                gridData.refreshAll();
+            } else {
+                setSelection(cssRepository.save(selection));
+            }
         });
-        cancelButton = new Button(VaadinIcon.ARROW_LONG_LEFT.create());
-        cancelButton.addClickListener(event -> {
+
+        final Button deleteButton = new Button("DELETE", VaadinIcon.FILE_REMOVE.create());
+        deleteButton.addClickListener(event -> {
+            cssRepository.delete(selection);
             setSelection(null);
+            gridData.refreshAll();
         });
-        final HorizontalLayout layout = new HorizontalLayout(saveButton, cancelButton);
-        layout.setWidthFull();
-        return layout;
+
+        return new VerticalLayout(templateName, new HorizontalLayout(saveButton, deleteButton));
     }
 
     private VerticalLayout createForm() {
-        binder = new Binder<>(CSSData.class);
-
         codeField = new TextField("Code");
         codeField.setWidthFull();
         binder.forField(codeField).bind(CSSData::getCode, CSSData::setCode);
         nameField = new TextField("Name");
         nameField.setWidthFull();
+        nameField.addValueChangeListener(event -> templateName.setHtmlContent("<h2>" + event.getValue() + "</h2>"));
         binder.forField(nameField).bind(CSSData::getName, CSSData::setName);
         contentField = new TextArea("Content");
         contentField.setWidthFull();
         contentField.setHeight("500px");
         binder.forField(contentField).bind(CSSData::getContent, CSSData::setContent);
+
 
         VerticalLayout tab1Content = new VerticalLayout(
                 codeField, nameField

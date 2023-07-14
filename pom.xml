@@ -16,7 +16,7 @@
     <version>${luminadocs.version}</version>
 
     <properties>
-        <luminadocs.version>1.5.2</luminadocs.version>
+        <luminadocs.version>1.5.3</luminadocs.version>
         <vaadin.version>24.1.2</vaadin.version>
         <java.version>17</java.version>
         <maven.compiler.source>17</maven.compiler.source>

@@ -8,6 +8,7 @@ import be.datafarmhouse.luminadocs.ui.Layout;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Html;
+import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.grid.Grid;
@@ -29,13 +30,10 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.server.StreamResourceWriter;
-import com.vaadin.flow.server.VaadinSession;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -84,6 +82,7 @@ public class TemplatesView extends Div {
         splitLayout.setSizeFull();
 
         grid = new Grid<>(TemplateData.class);
+        grid.setHeight(75, Unit.VH);
         grid.setColumns("code");
         grid.asSingleSelect().addValueChangeListener(event -> setSelection(event.getValue()));
 
@@ -147,14 +146,11 @@ public class TemplatesView extends Div {
             }
         });
 
-        final StreamResource resource = new StreamResource("preview.pdf", new StreamResourceWriter() {
-            @Override
-            public void accept(final OutputStream outputStream, final VaadinSession vaadinSession) throws IOException {
-                final LuminaDocsRequest request = new LuminaDocsRequest();
-                request.getTemplate().setCode(selection.getCode());
-                request.getTemplate().setVariables(mapper.readValue(selection.getTestVars(), Map.class));
-                luminaDocsService.generateDocument(request, outputStream);
-            }
+        final StreamResource resource = new StreamResource("preview.pdf", (StreamResourceWriter) (outputStream, vaadinSession) -> {
+            final LuminaDocsRequest request = new LuminaDocsRequest();
+            request.getTemplate().setCode(selection.getCode());
+            request.getTemplate().setVariables(mapper.readValue(selection.getTestVars(), Map.class));
+            luminaDocsService.generateDocument(request, outputStream);
         });
         final Anchor downloadButton = new Anchor(resource, "download");
         downloadButton.setTarget(AnchorTargetValue.forString("_new"));
@@ -255,7 +251,7 @@ public class TemplatesView extends Div {
     }
 
     protected void setPreview(final String html) {
-        preview.setSrc("data:text/html;charset=utf-8," + html);
+        preview.setSrcdoc(html);
     }
 
     protected void render() {

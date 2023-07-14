@@ -13,7 +13,6 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.tabs.Tab;
 import com.vaadin.flow.component.tabs.Tabs;
-import com.vaadin.flow.component.tabs.TabsVariant;
 import com.vaadin.flow.router.RouterLink;
 
 public class Layout extends AppLayout {
@@ -44,6 +43,7 @@ public class Layout extends AppLayout {
 
         // Have the drawer toggle button on the left
         layout.add(new DrawerToggle());
+        layout.add(new H2("LuminaDocs"));
 
         // Placeholder for the title of the current view.
         // The title will be set after navigation.
@@ -67,7 +67,6 @@ public class Layout extends AppLayout {
         HorizontalLayout logoLayout = new HorizontalLayout();
         logoLayout.setId("logo");
         logoLayout.setAlignItems(FlexComponent.Alignment.CENTER);
-        logoLayout.add(new H2("LuminaDocs"));
 
         // Display the logo and the menu in the drawer
         layout.add(logoLayout, menu);
@@ -77,7 +76,7 @@ public class Layout extends AppLayout {
     private Tabs createMenu() {
         final Tabs tabs = new Tabs();
         tabs.setOrientation(Tabs.Orientation.VERTICAL);
-        tabs.addThemeVariants(TabsVariant.LUMO_MINIMAL);
+        //tabs.addThemeVariants(TabsVariant.LUMO_MINIMAL);
         tabs.setId("tabs");
         tabs.add(createMenuItems());
         return tabs;
