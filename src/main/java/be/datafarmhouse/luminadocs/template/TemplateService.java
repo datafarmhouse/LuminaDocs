@@ -55,6 +55,7 @@ public class TemplateService {
         if (StringUtils.isNotBlank(template.getContent())) {
             final Document doc = Jsoup.parseBodyFragment(template.getContent());
             doc.outputSettings().indentAmount(4);
+            doc.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
             doc.outputSettings().charset("UTF-8");
             doc.outputSettings().prettyPrint(true);
             template.setContent(doc.body().html());
@@ -105,6 +106,7 @@ public class TemplateService {
     protected String resolveImages(final StringBuilder html) {
         final Document doc = Jsoup.parseBodyFragment(html.toString());
         doc.outputSettings().charset("UTF-8");
+        doc.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
         final Elements imgs = doc.getElementsByTag("img");
         for (final Element img : imgs) {
             if (img.hasAttr("src")) {
