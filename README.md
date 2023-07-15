@@ -74,4 +74,7 @@ PDF engine options:
 - pdfbox
 - wkhtml (-e WKHTML_URL=http://wkhtml requires https://hub.docker.com/r/openlabs/docker-wkhtmltopdf-aas)
 
+-e IMAGES_ADDRESS_URL=http://luminadocs:8080 is used for resolving images. In your template just
+provide <img src="codeOfImageData"/>
+
 I am open to requests.

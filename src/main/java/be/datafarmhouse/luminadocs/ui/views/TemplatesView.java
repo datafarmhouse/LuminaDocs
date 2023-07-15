@@ -87,7 +87,12 @@ public class TemplatesView extends Div {
         grid.asSingleSelect().addValueChangeListener(event -> setSelection(event.getValue()));
 
         createButton = new Button("ADD", VaadinIcon.FILE_ADD.create());
-        createButton.addClickListener(event -> setSelection(new TemplateData()));
+        createButton.addClickListener(event -> {
+            final TemplateData template = new TemplateData();
+            template.setContent("<div></div>");
+            template.setTestVars("{}");
+            setSelection(template);
+        });
 
         VerticalLayout leftLayout = new VerticalLayout();
         leftLayout.setSizeFull();

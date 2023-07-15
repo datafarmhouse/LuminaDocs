@@ -1,20 +1,24 @@
 package be.datafarmhouse.luminadocs.template;
 
 import be.datafarmhouse.luminadocs.LuminaDocsRequest;
-import be.datafarmhouse.luminadocs.template.data.CSSData;
-import be.datafarmhouse.luminadocs.template.data.CSSRepository;
-import be.datafarmhouse.luminadocs.template.data.TemplateData;
-import be.datafarmhouse.luminadocs.template.data.TemplateRepository;
+import be.datafarmhouse.luminadocs.template.data.*;
 import be.datafarmhouse.luminadocs.template.engine.TemplateEngine;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.ServletOutputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -27,8 +31,12 @@ public class TemplateService {
 
     private final CSSRepository cssRepository;
     private final TemplateRepository templateRepository;
+    private final ImageRepository imageRepository;
     private final List<TemplateEngine> engines;
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @Value("${images.address.url:http://localhost:8080}")
+    private String imagesURL;
 
     @PostConstruct
     public void init() {
@@ -43,6 +51,14 @@ public class TemplateService {
             } catch (final Throwable t) {
                 //
             }
+        }
+        if (StringUtils.isNotBlank(template.getContent())) {
+            final Document doc = Jsoup.parseBodyFragment(template.getContent());
+            doc.outputSettings().indentAmount(4);
+            doc.outputSettings().charset("UTF-8");
+            doc.outputSettings().prettyPrint(true);
+            template.setContent(doc.body().html());
+
         }
         return templateRepository.save(template);
     }
@@ -66,22 +82,44 @@ public class TemplateService {
         }
 
 
-        final StringBuilder html = new StringBuilder()
-                .append("<html><head>")
-                .append(css)
-                .append("</head><body>")
-                .append(engine.process(template, requestTemplate.getVariables()))
-                .append("</body></html>");
+        final String html = resolveImages(
+                new StringBuilder()
+                        .append("<html><head>")
+                        .append(css)
+                        .append("</head><body>")
+                        .append(engine.process(template, requestTemplate.getVariables()))
+                        .append("</body></html>")
+        );
 
         if (requestTemplate.isDebug()) {
-            log.info(html.toString());
+            log.info(html);
         }
 
         log.info("HTML generation took {}ms.", stopWatch.getTime(TimeUnit.MILLISECONDS));
         return TemplateResult.builder()
-                .html(html.toString())
+                .html(html)
                 .pdfEngine(pdfEngine)
                 .build();
+    }
+
+    protected String resolveImages(final StringBuilder html) {
+        final Document doc = Jsoup.parseBodyFragment(html.toString());
+        doc.outputSettings().charset("UTF-8");
+        final Elements imgs = doc.getElementsByTag("img");
+        for (final Element img : imgs) {
+            if (img.hasAttr("src")) {
+                final String src = img.attr("src");
+                if (StringUtils.isNotBlank(src) && !src.startsWith("http")) {
+                    final StringBuilder resolvedSRC =
+                            new StringBuilder(imagesURL)
+                                    .append("/images/")
+                                    .append(src);
+
+                    img.attr("src", resolvedSRC.toString());
+                }
+            }
+        }
+        return doc.outerHtml();
     }
 
     protected String getCSS(final LuminaDocsRequest.CSS requestCSS, CSSData templateCSS) {
@@ -106,5 +144,11 @@ public class TemplateService {
             }
         }
         throw new RuntimeException("Template Engine not found for name: " + name);
+    }
+
+    @SneakyThrows
+    public void serveImage(final String imageCode, final ServletOutputStream outputStream) {
+        final ImageData image = imageRepository.findByCode(imageCode);
+        IOUtils.copy(image.getContent().getBinaryStream(), outputStream);
     }
 }

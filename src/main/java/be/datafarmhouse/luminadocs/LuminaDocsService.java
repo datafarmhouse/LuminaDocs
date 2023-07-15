@@ -3,6 +3,7 @@ package be.datafarmhouse.luminadocs;
 import be.datafarmhouse.luminadocs.pdf.PDFService;
 import be.datafarmhouse.luminadocs.template.TemplateResult;
 import be.datafarmhouse.luminadocs.template.TemplateService;
+import jakarta.servlet.ServletOutputStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,5 +24,9 @@ public class LuminaDocsService {
                 templateResult,
                 outputStream
         );
+    }
+
+    public void serveImage(final String imageCode, final ServletOutputStream outputStream) {
+        templateService.serveImage(imageCode, outputStream);
     }
 }
