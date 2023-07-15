@@ -266,6 +266,7 @@ public class TemplatesView extends Div {
             try {
                 final LuminaDocsRequest.Template template = new LuminaDocsRequest.Template();
                 final LuminaDocsRequest.CSS css = new LuminaDocsRequest.CSS();
+                template.setPreview(true);
                 template.setDebug(false);
                 template.setContent(contentField.getValue());
                 template.setVariables(mapper.readValue(selection.getTestVars(), Map.class));

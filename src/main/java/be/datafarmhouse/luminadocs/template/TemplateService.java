@@ -37,6 +37,8 @@ public class TemplateService {
 
     @Value("${images.address.url:http://localhost:8080}")
     private String imagesURL;
+    @Value("${images.address.url.preview:http://localhost:8080}")
+    private String imagesPreviewURL;
 
     @PostConstruct
     public void init() {
@@ -84,6 +86,7 @@ public class TemplateService {
 
 
         final String html = resolveImages(
+                requestTemplate.isPreview(),
                 new StringBuilder()
                         .append("<html><head>")
                         .append(css)
@@ -103,7 +106,7 @@ public class TemplateService {
                 .build();
     }
 
-    protected String resolveImages(final StringBuilder html) {
+    protected String resolveImages(final boolean isPreview, final StringBuilder html) {
         final Document doc = Jsoup.parseBodyFragment(html.toString());
         doc.outputSettings().charset("UTF-8");
         doc.outputSettings().syntax(Document.OutputSettings.Syntax.xml);
@@ -113,7 +116,7 @@ public class TemplateService {
                 final String src = img.attr("src");
                 if (StringUtils.isNotBlank(src) && !src.startsWith("http")) {
                     final StringBuilder resolvedSRC =
-                            new StringBuilder(imagesURL)
+                            new StringBuilder(isPreview ? imagesPreviewURL : imagesURL)
                                     .append("/images/")
                                     .append(src);
 

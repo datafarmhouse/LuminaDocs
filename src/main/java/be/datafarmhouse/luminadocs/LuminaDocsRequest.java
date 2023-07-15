@@ -15,6 +15,7 @@ public class LuminaDocsRequest {
     @Data
     public static class Template {
 
+        private boolean preview = false;
         private boolean debug = false;
         private CSS css = new CSS();
         private String code;
