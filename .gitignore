@@ -1,2 +1,4 @@
-/target/
-/frontend/generated/
+target
+frontend
+.idea
+*.iml
